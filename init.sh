@@ -1,6 +1,8 @@
 #!/bin/bash
 set -xue -o pipefail
-source /tmp/env
+HOSTFS=${HOSTFS:-$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)}
+
+source ${HOSTFS}/tmp/env
 
 mount -t proc proc /proc/
 mount -t sysfs sys /sys/
@@ -24,20 +26,30 @@ ln -s /dev/pts/ptmx /dev/ptmx
 
 rngd -r /dev/urandom
 
-mkdir -p /var/lib/docker/
-mount -t ext4 /persistent/var_lib_docker.img /var/lib/docker/
+mount -t tmpfs none /root
+
+mount -t tmpfs none /var/lib/docker/
+mount -t tmpfs none /var/lib/apt/lists/
+mount -t tmpfs none /var/cache/apt/archives/
+#mkdir -p /var/lib/docker/
+mount -t ext4 ${HOSTFS}/persistent/var_lib_docker.img /var/lib/docker/
 
 ip link set dev lo up
 ip link set dev vec0 up
 ip addr add 10.0.2.100/24 dev vec0
 ip route add default via 10.0.2.2
 
+export HOME=/root
+mkdir -p ${HOME}/.ssh/
+echo "${SSH_PRIVATE_KEY}" > ${HOME}/.ssh/id_rsa
+chmod 700 ${HOME}/.ssh -R
+
 #connect to the parent docker container for reverse forwarding of the docker socket
 ssh -f -N -o StrictHostKeyChecking=no \
-    -R/var/run/docker.sock:/var/run/docker.sock \
+    -R/home/user/.docker/run/docker.sock:/var/run/docker.sock \
     -R0.0.0.0:2375:127.0.0.1:2375 \
     -R0.0.0.0:2376:127.0.0.1:2376 \
-    10.0.2.2
+    ${HOST_USER}@10.0.2.2
 
 # Change permissions to docker.sock to allow user access
 chmod 0660 /var/run/docker.sock && chown root:$DIUID_DOCKERD_GROUP /var/run/docker.sock

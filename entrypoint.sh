@@ -1,14 +1,41 @@
 #!/bin/bash
+set -x
 ARGS=$@
 
 echo "Docker: $(dockerd --version)"
 echo "Kernel: $(/linux/linux --version)"
 echo "Rootfs: $(lsb_release -ds)"
 echo
-echo "Configuration: MEM=$MEM DISK=$DISK"
+echo "Configuration: MEM=${MEMORY:-$MEM} DISK=$DISK"
+
+#/usr/local/bin/sshd -v &
 
 #start sshd
-/etc/init.d/ssh start
+#/etc/init.d/ssh start
+mkdir -p ${HOME}/keys/ ${HOME}/.ssh/
+ssh-keygen -f ${HOME}/keys/ssh_host_rsa_key -N '' -t rsa
+ssh-keygen -f ${HOME}/keys/ssh_host_dsa_key -N '' -t dsa
+
+echo ${SSH_PUB_KEY} >> ${HOME}/.ssh/authorized_keys
+
+cat ${HOME}/keys/ssh_host_rsa_key.pub >>${HOME}/.ssh/authorized_keys
+cat ${HOME}/keys/ssh_host_dsa_key.pub >>${HOME}/.ssh/authorized_keys
+
+chmod 600 ${HOME}/.ssh/authorized_keys
+chmod 700 ${HOME}/.ssh
+chmod 600 ${HOME}/keys/*
+chmod 644 ${HOME}/keys/config
+cp ${HOME}/keys/ssh_host_rsa_key ${HOME}/.ssh/id_rsa
+sed -i "s|\\\${HOME}|${HOME}|g" ${HOME}/keys/config
+
+if [[ "root" == $(whoami) ]];
+then
+  mkdir /run/sshd
+  chmod 0755 /run/sshd
+fi
+
+/usr/sbin/sshd -f ${HOME}/keys/config -D &
+
 
 # Create the ext4 volume image for /var/lib/docker
 if [ ! -f /persistent/var_lib_docker.img ]; then
@@ -24,6 +51,9 @@ fi
 
 #start the uml kernel with docker inside
 echo "DIUID_DOCKERD_FLAGS=\"$DIUID_DOCKERD_FLAGS\"" > /tmp/env
+echo "HOST_USER=\"$(whoami)\"" >> /tmp/env
+echo "HOST_HOME=\"$HOME\"" >> /tmp/env
+echo "SSH_PRIVATE_KEY=\"$(cat ${HOME}/.ssh/id_rsa)\"" >> /tmp/env
 
 # Get docker group from DIUID_DOCKERD_FLAGS
 DIUID_DOCKERD_GROUP='docker'

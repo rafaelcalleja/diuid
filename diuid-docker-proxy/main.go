@@ -47,10 +47,11 @@ func main() {
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Executing command: %s", cmd.String())
 
 	sshFlags := []string{"-N", "-o", "StrictHostKeyChecking=no"}
 	sshFlags = append(sshFlags, fmt.Sprintf("-R%s:%d:0.0.0.0:%d", *hostIP, *hostPort, *hostPort))
-	sshFlags = append(sshFlags, diuidParentHost)
+	sshFlags = append(sshFlags, fmt.Sprintf("user@%s", diuidParentHost))
 	sshCmd := exec.Command("ssh", sshFlags...)
 	sshCmd.Env = os.Environ()
 	sshCmd.SysProcAttr = &syscall.SysProcAttr{
@@ -60,6 +61,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer sshCmd.Process.Kill()
+	log.Printf("Executing SSH command: %s", sshCmd.String())
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)

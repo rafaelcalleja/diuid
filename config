@@ -1,0 +1,20 @@
+Port 22
+
+HostKey ${HOME}/keys/ssh_host_rsa_key
+HostKey ${HOME}/keys/ssh_host_dsa_key
+AuthorizedKeysFile  ${HOME}/.ssh/authorized_keys
+PasswordAuthentication Yes
+PermitRootLogin without-password
+PermitEmptyPasswords yes
+
+PubkeyAuthentication yes
+GatewayPorts=yes
+
+LogLevel DEBUG
+ChallengeResponseAuthentication no
+
+X11Forwarding yes
+PrintMotd no
+AcceptEnv LANG LC_*
+Subsystem   sftp    /usr/lib/ssh/sftp-server
+PidFile sshd.pid

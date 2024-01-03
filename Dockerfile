@@ -77,6 +77,11 @@ RUN \
 
 #install kernel and scripts
 COPY --from=kernel_build /out/linux /linux/linux
+
+#VOLUME ["/image"]
+#COPY --chown=1000:1000 image.raw /image/
+#RUN chmod 777 /image/image.raw
+
 ADD kernel.sh kernel.sh
 ADD entrypoint.sh entrypoint.sh
 ADD init.sh init.sh
@@ -85,14 +90,37 @@ ADD init.sh init.sh
 ENV MEM 2G
 ENV TMPDIR /umlshm
 
+RUN mkdir /umlshm; chown 1000:1000 /umlshm
+RUN mkdir /persistent; chown 1000:1000 /persistent
+RUN mkdir /var/lib/docker; chown 1000:1000 /var/lib/docker
+RUN mkdir /etc/docker; chown 1000:1000 /etc/docker
+
+RUN useradd -m -u 1000 user
+RUN mkdir -p /home/user && chown 1000:1000 /home/user -R
+COPY reverse-ssh /usr/local/bin/sshd
+
+#RUN chown 1000:1000 /image
+RUN apt-get install -y uidmap
+
+USER 1000
+ENV HOME /home/user
+COPY --chown=user:user config ${HOME}/keys/
+COPY --chown=root:root config /root/keys/
+
 #it is recommended to override /umlshm with
 #--tmpfs /umlshm:rw,nosuid,nodev,exec,size=8g
-VOLUME /umlshm
+#VOLUME /umlshm
 
 ENV DISK 10G
+ENV XDG_RUNTIME_DIR /home/user/.docker/run
+ENV PATH /usr/bin:$PATH
+ENV DOCKER_HOST unix:///home/user/.docker/run/docker.sock
+
 
 #disk image for /var/lib/docker is created under this directory
-VOLUME /persistent
+#VOLUME /persistent
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "bash" ]
+
+RUN dockerd-rootless-setuptool.sh install
