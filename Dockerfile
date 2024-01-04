@@ -102,7 +102,7 @@ RUN mkdir /etc/docker; chown 1000:1000 /etc/docker
 
 RUN useradd -m -u 1000 user
 RUN mkdir -p /home/user && chown 1000:1000 /home/user -R
-COPY reverse-ssh /usr/local/bin/sshd
+#COPY reverse-ssh /usr/local/bin/sshd
 
 #RUN chown 1000:1000 /image
 RUN apt-get install -y uidmap
@@ -116,14 +116,16 @@ COPY --chown=root:root config /root/keys/
 #--tmpfs /umlshm:rw,nosuid,nodev,exec,size=8g
 VOLUME /umlshm
 
+#disk image for /var/lib/docker is created under this directory
+VOLUME /persistent
+
+
 ENV DISK 10G
 ENV XDG_RUNTIME_DIR /home/user/.docker/run
 ENV PATH /usr/bin:$PATH
 ENV DOCKER_HOST unix:///home/user/.docker/run/docker.sock
 
 
-#disk image for /var/lib/docker is created under this directory
-VOLUME /persistent
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "bash" ]
