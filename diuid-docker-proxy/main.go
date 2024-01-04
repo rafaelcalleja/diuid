@@ -14,6 +14,7 @@ import (
 const (
 	realProxy       = "docker-proxy"
 	diuidParentHost = "10.0.2.2"
+	diuidParentPort = "2222"
 )
 
 // drop-in replacement for docker-proxy.
@@ -49,7 +50,7 @@ func main() {
 	}
 	log.Printf("Executing command: %s", cmd.String())
 
-	sshFlags := []string{"-N", "-o", "StrictHostKeyChecking=no"}
+	sshFlags := []string{"-N", "-o", "StrictHostKeyChecking=no", "-p", diuidParentPort}
 	sshFlags = append(sshFlags, fmt.Sprintf("-R%s:%d:0.0.0.0:%d", *hostIP, *hostPort, *hostPort))
 	sshFlags = append(sshFlags, fmt.Sprintf("user@%s", diuidParentHost))
 	sshCmd := exec.Command("ssh", sshFlags...)

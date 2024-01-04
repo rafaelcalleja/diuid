@@ -49,7 +49,7 @@ ssh -f -N -o StrictHostKeyChecking=no \
     -R/home/user/.docker/run/docker.sock:/var/run/docker.sock \
     -R0.0.0.0:2375:127.0.0.1:2375 \
     -R0.0.0.0:2376:127.0.0.1:2376 \
-    ${HOST_USER}@10.0.2.2
+    ${HOST_USER}@10.0.2.2 -p 2222
 
 # Change permissions to docker.sock to allow user access
 chmod 0660 /var/run/docker.sock && chown root:$DIUID_DOCKERD_GROUP /var/run/docker.sock

@@ -2,11 +2,14 @@
 
 ARGS=$@
 
-echo "Docker: $(dockerd --version)"
-echo "Kernel: $(/linux/linux --version)"
-echo "Rootfs: $(lsb_release -ds)"
-echo
-echo "Configuration: MEM=${MEMORY:-$MEM} DISK=$DISK"
+if [[ ! -z "${DEBUG}" ]];
+then
+  echo "Docker: $(dockerd --version)"
+  echo "Kernel: $(/linux/linux --version)"
+  echo "Rootfs: $(lsb_release -ds)"
+  echo
+  echo "Configuration: MEM=${MEMORY:-$MEM} DISK=$DISK"
+fi
 
 #/usr/local/bin/sshd -v &
 
@@ -39,14 +42,19 @@ fi
 
 # Create the ext4 volume image for /var/lib/docker
 if [ ! -f /persistent/var_lib_docker.img ]; then
-    echo "Formatting /persistent/var_lib_docker.img"
+    if [[ ! -z "${DEBUG}" ]];
+    then
+      echo "Formatting /persistent/var_lib_docker.img"
+    fi
     dd if=/dev/zero of=/persistent/var_lib_docker.img bs=1 count=0 seek=${DISK} > /dev/null 2>&1
     mkfs.ext4 /persistent/var_lib_docker.img > /dev/null 2>&1
 fi
 
 # verify TMPDIR configuration
 if [ $(stat --file-system --format=%T $TMPDIR) != tmpfs ]; then
-    echo "For better performance, consider mounting a tmpfs on $TMPDIR like this: \`docker run --tmpfs $TMPDIR:rw,nosuid,nodev,exec,size=8g\`"
+    if [[ ! -z "${DEBUG}" ]]; then
+      echo "For better performance, consider mounting a tmpfs on $TMPDIR like this: \`docker run --tmpfs $TMPDIR:rw,nosuid,nodev,exec,size=8g\`"
+    fi
 fi
 
 #start the uml kernel with docker inside
@@ -70,7 +78,9 @@ echo "DIUID_DOCKERD_GROUP=\"$DIUID_DOCKERD_GROUP\"" >> /tmp/env
 
 /sbin/start-stop-daemon --start --background --make-pidfile --pidfile /tmp/kernel.pid --exec /bin/bash -- -c "exec /kernel.sh > /tmp/kernel.log 2>&1"
 
-echo -n "waiting for dockerd "
+if [[ ! -z "${DEBUG}" ]]; then
+  echo -n "waiting for dockerd "
+fi
 while true; do
 	if docker version 2>/dev/null >/dev/null; then
 		echo ""
@@ -83,9 +93,13 @@ while true; do
 		exit 1
 	fi
 
-	echo -n "."
+  if [[ ! -z "${DEBUG}" ]]; then
+	  echo -n "."
+  fi
 	sleep 0.5
 done
 
-echo "Executing \"$ARGS\""
+if [[ ! -z "${DEBUG}" ]]; then
+  echo "Executing \"$ARGS\""
+fi
 exec $ARGS
