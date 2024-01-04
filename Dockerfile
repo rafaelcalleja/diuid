@@ -87,6 +87,8 @@ COPY --from=kernel_build /out/linux /linux/linux
 #COPY --chown=1000:1000 image.raw /image/
 #RUN chmod 777 /image/image.raw
 
+RUN apt-get install -y uidmap
+
 ADD kernel.sh kernel.sh
 ADD entrypoint.sh entrypoint.sh
 ADD init.sh init.sh
@@ -105,7 +107,6 @@ RUN mkdir -p /home/user && chown 1000:1000 /home/user -R
 #COPY reverse-ssh /usr/local/bin/sshd
 
 #RUN chown 1000:1000 /image
-RUN apt-get install -y uidmap
 
 USER 1000
 ENV HOME /home/user
