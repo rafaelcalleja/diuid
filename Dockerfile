@@ -113,7 +113,7 @@ COPY --chown=user:user config ${HOME}/keys/
 COPY --chown=root:root config /root/keys/
 
 #it is recommended to override /umlshm with
-#--tmpfs /umlshm:rw,nosuid,nodev,exec,size=8g
+#--tmpfs /umlshm:rw,nosuid,nodev,exec,size=8g,mode=1777,uid=1000,gid=1000
 VOLUME /umlshm
 
 #disk image for /var/lib/docker is created under this directory
