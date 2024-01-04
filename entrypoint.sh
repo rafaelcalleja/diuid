@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+
 ARGS=$@
 
 echo "Docker: $(dockerd --version)"
@@ -13,8 +13,8 @@ echo "Configuration: MEM=${MEMORY:-$MEM} DISK=$DISK"
 #start sshd
 #/etc/init.d/ssh start
 mkdir -p ${HOME}/keys/ ${HOME}/.ssh/
-ssh-keygen -f ${HOME}/keys/ssh_host_rsa_key -N '' -t rsa
-ssh-keygen -f ${HOME}/keys/ssh_host_dsa_key -N '' -t dsa
+ssh-keygen -f ${HOME}/keys/ssh_host_rsa_key -N '' -t rsa > /dev/null 2>&1
+ssh-keygen -f ${HOME}/keys/ssh_host_dsa_key -N '' -t dsa > /dev/null 2>&1
 
 echo ${SSH_PUB_KEY} >> ${HOME}/.ssh/authorized_keys
 

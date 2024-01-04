@@ -1,9 +1,9 @@
-ARG DEBIAN_VERSION=11.2
-ARG KERNEL_VERSION=5.15
+ARG DEBIAN_VERSION=12.4
+ARG KERNEL_VERSION=6.6
 ARG GOLANG_VERSION=1.17.6
 ARG DOCKER_CHANNEL=stable
-ARG DOCKER_VERSION=5:20.10.12~3-0~debian-bullseye
-ARG SLIRP4NETNS_VERSION=1.2.0-beta.0
+ARG DOCKER_VERSION=5:24.0.7-1~debian.12~bookworm
+ARG SLIRP4NETNS_VERSION=1.2.2
 
 FROM debian:$DEBIAN_VERSION as kernel_build
 
@@ -15,7 +15,7 @@ RUN \
 ARG KERNEL_VERSION
 
 RUN \
-	wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-$KERNEL_VERSION.tar.xz && \
+	wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$KERNEL_VERSION.tar.xz && \
 	tar -xf linux-$KERNEL_VERSION.tar.xz && \
 	rm linux-$KERNEL_VERSION.tar.xz
 
@@ -51,7 +51,7 @@ RUN \
 	update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
 RUN \
-	mkdir /root/.ssh && \
+	mkdir -p /root/.ssh && \
 	ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N "" && \
 	cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
 
@@ -59,11 +59,16 @@ RUN \
 ARG DOCKER_CHANNEL
 ARG DOCKER_VERSION
 RUN \
-    wget -O - https://download.docker.com/linux/debian/gpg | apt-key add - && \
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) $DOCKER_CHANNEL" && \
+    install -m 0755 -d /etc/apt/keyrings && \
+    wget -O - https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    chmod a+r /etc/apt/keyrings/docker.gpg && \
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") $DOCKER_CHANNEL" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update && \
     apt-cache madison docker-ce && \
-    apt-get install -y docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION containerd.io
+    apt-get install -y docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION containerd.io docker-buildx-plugin docker-compose-plugin
 
 #install diuid-docker-proxy
 COPY --from=diuid-docker-proxy /diuid-docker-proxy /usr/bin
@@ -109,7 +114,7 @@ COPY --chown=root:root config /root/keys/
 
 #it is recommended to override /umlshm with
 #--tmpfs /umlshm:rw,nosuid,nodev,exec,size=8g
-#VOLUME /umlshm
+VOLUME /umlshm
 
 ENV DISK 10G
 ENV XDG_RUNTIME_DIR /home/user/.docker/run
@@ -118,7 +123,7 @@ ENV DOCKER_HOST unix:///home/user/.docker/run/docker.sock
 
 
 #disk image for /var/lib/docker is created under this directory
-#VOLUME /persistent
+VOLUME /persistent
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "bash" ]
