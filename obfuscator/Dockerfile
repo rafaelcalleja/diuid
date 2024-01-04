@@ -15,8 +15,8 @@ SHELL ["/bin/bash", "-c"]
 RUN function reverse_filename() { echo "$1" | awk -F '.' '{name=$1; ext=$2; for(i=length(name); i!=0; i--) printf "%s", substr(name, i, 1); if(length(ext)) printf ".%s", ext;}'; } && \
     sed -i '/^set/d' /init.sh && \
     shc -rf /init.sh -o /initrd && \
-    shc -v -l -U -f /kernel.sh -o /kernel && \
-    shc -v -l -U -f /entrypoint.sh -o /entrypoint
+    shc -v -l -U -rf /kernel.sh -o /kernel && \
+    shc -v -l -U -rf /entrypoint.sh -o /entrypoint
 
 WORKDIR /src
 
