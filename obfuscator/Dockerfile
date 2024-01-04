@@ -54,9 +54,9 @@ RUN mkdir -p cmd/entry cmd/boot cmd/linux && \
     sed 's/file.bin/entrypoint/g' template3.go > cmd/entry/main.go && \
     sed 's/file.bin/initrd/g' template3.go > cmd/boot/main.go && \
     #sed 's/file.bin/kernel/g' template2.go > cmd/linux/main.go && \
-    CGO_ENABLED=0 garble -literals -tiny build ./cmd/entry && \
-    CGO_ENABLED=0 garble -literals -tiny build ./cmd/boot && \
-    CGO_ENABLED=0 garble -literals -tiny build ./cmd/linux
+    CGO_ENABLED=0 garble -literals -tiny build -ldflags=" -s -w" -a -installsuffix cgo ./cmd/entry && \
+    CGO_ENABLED=0 garble -literals -tiny build -ldflags=" -s -w" -a -installsuffix cgo ./cmd/boot && \
+    CGO_ENABLED=0 garble -literals -tiny build -ldflags=" -s -w" -a -installsuffix cgo ./cmd/linux
 
 USER user
 
