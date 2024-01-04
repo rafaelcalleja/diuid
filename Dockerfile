@@ -1,8 +1,8 @@
-ARG DEBIAN_VERSION=12.4
-ARG KERNEL_VERSION=6.6
+ARG DEBIAN_VERSION=11.2
+ARG KERNEL_VERSION=5.15
 ARG GOLANG_VERSION=1.17.6
 ARG DOCKER_CHANNEL=stable
-ARG DOCKER_VERSION=5:24.0.7-1~debian.12~bookworm
+ARG DOCKER_VERSION=5:20.10.12~3-0~debian-bullseye
 ARG SLIRP4NETNS_VERSION=1.2.2
 
 FROM debian:$DEBIAN_VERSION as kernel_build
@@ -15,7 +15,7 @@ RUN \
 ARG KERNEL_VERSION
 
 RUN \
-	wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$KERNEL_VERSION.tar.xz && \
+	wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-$KERNEL_VERSION.tar.xz && \
 	tar -xf linux-$KERNEL_VERSION.tar.xz && \
 	rm linux-$KERNEL_VERSION.tar.xz
 
