@@ -54,3 +54,10 @@ dockerfile:
 	echo "COPY --from=builder /root /root\nCOPY --from=builder /entrypoint.sh /entrypoint.sh\n" >> temp.Dockerfile && \
 	echo "COPY --from=builder /umlshm /umlshm\nCOPY --from=builder /persistent /persistent\n" >> temp.Dockerfile && \
 	$(CURRENT_DIR)/dockerfile-from-image.sh $(BASE_IMAGE) >> temp.Dockerfile
+
+
+KEY_NAME ?= diud
+PRIVATE_KEY := $(shell gpg --export-secret-keys --armor $(KEY_NAME)|base64 |  tr -d '\n')
+
+private_key:
+	@echo $(PRIVATE_KEY)

