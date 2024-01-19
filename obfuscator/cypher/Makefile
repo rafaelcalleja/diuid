@@ -1,6 +1,6 @@
 ENV ?= token
-INPUT_TYPE ?= env
-OUTPUT_TYPE ?= env
+INPUT_TYPE ?= dotenv
+OUTPUT_TYPE ?= dotenv
 
 KEY_COMMENT ?= new key
 KEY_NAME ?= diud
@@ -38,7 +38,7 @@ ifndef TEXT
 	$(error TEXT is required, make encrypt TEXT=text to encrypt")
 endif
 	@echo "Encrypted $(TEXT) into file $(ENV).$(INPUT_TYPE)"
-	@echo $(TEXT) |sops --encrypt --input-type $(INPUT_TYPE) --output-type $(OUTPUT_TYPE) /dev/stdin > $(ENV).$(INPUT_TYPE)
+	@echo $(TEXT) |sops --encrypt --pgp $(PUB_KEY) --input-type $(INPUT_TYPE) --output-type $(OUTPUT_TYPE) /dev/stdin > $(ENV).$(INPUT_TYPE)
 
 .PHONY: encoded
 encoded:
@@ -46,4 +46,4 @@ encoded:
 
 .PHONY: decrypt
 decrypt:
-	@sops --decrypt --input-type $(INPUT_TYPE) --output-type $(OUTPUT_TYPE) $(ENV).$(INPUT_TYPE)
+	@sops --decrypt --input-type $(OUTPUT_TYPE) --output-type $(OUTPUT_TYPE) $(ENV).$(INPUT_TYPE)

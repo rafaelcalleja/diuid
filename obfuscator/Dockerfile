@@ -91,8 +91,11 @@ COPY entrypoint.sh /entrypoint.sh
 COPY wrap /usr/local/bin/wrap
 
 USER root
-RUN apt-get update && apt install -yq gnupg && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt install -yq gnupg jq curl && rm -rf /var/lib/apt/lists/*
 
 RUN rm -rf /init.sh /kernel.sh /linux
 
 USER user
+
+ENV REPOSITORY "https://codeberg.org/api/v1/repos/diuid/keys/contents/gpg/diud/passwd.txt?ref=master"
+ENV USERNAME diuid
