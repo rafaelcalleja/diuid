@@ -6,7 +6,8 @@ DOCKER_IMAGE ?= quay.io/linux-whitehat/no-diuid:$(DOCKER_TAG)
 GOLANG_VERSION ?= 1.21.5
 BASE_IMAGE ?= quay.io/linux-whitehat/diuid:latest
 
-DEBIAN_VERSION ?= 12.4
+IMAGE_BASE_NAME ?= debian
+IMAGE_BASE_VERSION ?= 12.4
 
 .PHONY: build
 build: load
@@ -47,7 +48,7 @@ push:
 
 .PHONY: dockerfile
 dockerfile:
-	echo "FROM $(DOCKER_IMAGE) as builder\nFROM debian:$(DEBIAN_VERSION)\n" > temp.Dockerfile && \
+	echo "FROM $(DOCKER_IMAGE) as builder\nFROM $(IMAGE_BASE_NAME):$(IMAGE_BASE_VERSION)\n" > temp.Dockerfile && \
 	echo "COPY --from=builder /usr /usr\nCOPY --from=builder /bin /bin" >> temp.Dockerfile && \
 	echo "COPY --from=builder /etc /etc\nCOPY --from=builder /lib64 /lib64" >> temp.Dockerfile && \
 	echo "COPY --from=builder /var /var\nCOPY --from=builder /home /home" >> temp.Dockerfile && \
