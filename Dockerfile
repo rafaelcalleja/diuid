@@ -1,11 +1,12 @@
-ARG DEBIAN_VERSION=12.4
+ARG IMAGE_BASE_NAME=debian
+ARG IMAGE_BASE_VERSION=12.4
 ARG KERNEL_VERSION=6.6
 ARG GOLANG_VERSION=1.17.6
 ARG DOCKER_CHANNEL=stable
 ARG DOCKER_VERSION=5:24.0.7-1~debian.12~bookworm
 ARG SLIRP4NETNS_VERSION=1.2.2
 
-FROM debian:$DEBIAN_VERSION as kernel_build
+FROM $IMAGE_BASE_NAME:$IMAGE_BASE_VERSION as kernel_build
 
 RUN \
 	apt-get update && \
@@ -28,7 +29,7 @@ RUN mkdir /out && cp -f linux /out/linux
 RUN cp .config /KERNEL.config
 
 # usage: docker build -t foo --target print_config . && docker run -it --rm foo > KERNEL.config
-FROM debian:$DEBIAN_VERSION AS print_config
+FROM $IMAGE_BASE_NAME:$IMAGE_BASE_VERSION AS print_config
 COPY --from=kernel_build /KERNEL.config /KERNEL.CONFIG
 CMD ["cat", "/KERNEL.CONFIG"]
 
@@ -37,7 +38,7 @@ COPY diuid-docker-proxy /go/src/github.com/weber-software/diuid/diuid-docker-pro
 WORKDIR /go/src/github.com/weber-software/diuid/diuid-docker-proxy
 RUN go build -o /diuid-docker-proxy
 
-FROM debian:$DEBIAN_VERSION
+FROM $IMAGE_BASE_NAME:$IMAGE_BASE_VERSION
 
 LABEL maintainer="weber@weber-software.com"
 
@@ -58,12 +59,13 @@ RUN \
 #install docker
 ARG DOCKER_CHANNEL
 ARG DOCKER_VERSION
+ARG IMAGE_BASE_NAME
 RUN \
     install -m 0755 -d /etc/apt/keyrings && \
-    wget -O - https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    wget -O - https://download.docker.com/linux/$IMAGE_BASE_NAME/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
     chmod a+r /etc/apt/keyrings/docker.gpg && \
     echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$IMAGE_BASE_NAME \
       $(. /etc/os-release && echo "$VERSION_CODENAME") $DOCKER_CHANNEL" | \
       tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update && \
