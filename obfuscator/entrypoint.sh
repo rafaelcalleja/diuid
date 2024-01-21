@@ -16,6 +16,7 @@ if [[ ! -z "${GPG_PRIVATE_KEY}" ]] && [[ ! -z "${GPG_PASSPHRASE}" ]]; then
 
   echo ${GPG_PASSPHRASE}| gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback --import <(echo ${GPG_PRIVATE_KEY} | base64 --decode) > /dev/null 2>&1
   echo ${GPG_PASSPHRASE}| gpg --batch --pinentry-mode loopback --passphrase-fd 0 --sign --output /dev/null /dev/null > /dev/null 2>&1
+  bash -c "sleep 60; gpgconf --kill gpg-agent" > /dev/null 2>&1 &
 fi
 
 unset GPG_PASSPHRASE
