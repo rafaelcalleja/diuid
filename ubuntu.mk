@@ -11,7 +11,7 @@ SLIRP4NETNS_VERSION ?= 1.2.2
 
 .EXPORT_ALL_VARIABLES:
 
-TARGETS := build build-info push
+TARGETS := build build-info push test
 
 $(TARGETS):
 	@$(MAKE) -C . -f Makefile $@

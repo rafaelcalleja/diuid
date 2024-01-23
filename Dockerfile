@@ -31,6 +31,15 @@ RUN cp .config /KERNEL.config
 # usage: docker build -t foo --target print_config . && docker run -it --rm foo > KERNEL.config
 FROM $IMAGE_BASE_NAME:$IMAGE_BASE_VERSION AS print_config
 COPY --from=kernel_build /KERNEL.config /KERNEL.CONFIG
+RUN echo "CONFIG_IPV6=y" >> KERNEL.CONFIG && \
+    echo "CONFIG_IPV6_ROUTER_PREF=y" >> KERNEL.CONFIG && \
+    echo "CONFIG_IPV6_SIT=y" >> KERNEL.CONFIG && \
+    echo "CONFIG_IPV6_NDISC_NODETYPE=y" >> KERNEL.CONFIG && \
+    echo "CONFIG_IPV6_MULTIPLE_TABLES=y" >> KERNEL.CONFIG && \
+    echo "CONFIG_IPV6_SUBTREES=y" >> KERNEL.CONFIG && \
+    echo "CONFIG_IPV6_MROUTE=y" >> KERNEL.CONFIG && \
+    echo "CONFIG_NF_DEFRAG_IPV6=y" >> KERNEL.CONFIG
+
 CMD ["cat", "/KERNEL.CONFIG"]
 
 FROM golang:$GOLANG_VERSION AS diuid-docker-proxy
@@ -133,4 +142,5 @@ ENV DOCKER_HOST unix:///home/user/.docker/run/docker.sock
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "bash" ]
 
+COPY --chown=user:user daemon.json /etc/docker/daemon.json
 RUN dockerd-rootless-setuptool.sh install
