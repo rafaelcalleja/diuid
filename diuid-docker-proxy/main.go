@@ -1,14 +1,18 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
 	"strconv"
 	"syscall"
+
+	"github.com/rootless-containers/rootlesskit/v2/pkg/api"
 )
 
 const (
@@ -18,10 +22,52 @@ const (
 )
 
 // drop-in replacement for docker-proxy.
-//
-// forked from https://github.com/rootless-containers/rootlesskit/blob/v0.6.0/cmd/rootlesskit-docker-proxy/main.go
-// (relicensed to GPL3 by the author)
+// needs to be executed in the child namespace.
 func main() {
+	f := os.NewFile(3, "signal-parent")
+	defer f.Close()
+	if err := xmain(f); err != nil {
+		// success: "0\n" (written by realProxy)
+		// error: "1\n" (written by either rootlesskit-docker-proxy or realProxy)
+		fmt.Fprintf(f, "1\n%s", err)
+		log.Fatal(err)
+	}
+}
+
+func isIPv6(ipStr string) bool {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return false
+	}
+	return ip.To4() == nil
+}
+
+func getPortDriverProtos(info *api.Info) (string, map[string]struct{}, error) {
+	if info.PortDriver == nil {
+		return "", nil, errors.New("no port driver is available")
+	}
+	m := make(map[string]struct{}, len(info.PortDriver.Protos))
+	for _, p := range info.PortDriver.Protos {
+		m[p] = struct{}{}
+	}
+	return info.PortDriver.Driver, m, nil
+}
+
+type protocolUnsupportedError struct {
+	apiProto       string
+	portDriverName string
+	hostIP         string
+	hostPort       int
+}
+
+func (e *protocolUnsupportedError) Error() string {
+	return fmt.Sprintf("protocol %q is not supported by the RootlessKit port driver %q, discarding request for %q",
+		e.apiProto,
+		e.portDriverName,
+		net.JoinHostPort(e.hostIP, strconv.Itoa(e.hostPort)))
+}
+
+func xmain(f *os.File) error {
 	containerIP := flag.String("container-ip", "", "container ip")
 	containerPort := flag.Int("container-port", -1, "container port")
 	hostIP := flag.String("host-ip", "", "host ip")
@@ -29,26 +75,28 @@ func main() {
 	proto := flag.String("proto", "tcp", "proxy protocol")
 	flag.Parse()
 
-	if *proto != "tcp" {
-		log.Fatalf("unsupported proto: %q", proto)
+	// use loopback IP as the child IP, when port-driver="builtin"
+	childIP := "127.0.0.1"
+	if isIPv6(*hostIP) {
+		childIP = "::1"
 	}
 
 	cmd := exec.Command(realProxy,
 		"-container-ip", *containerIP,
 		"-container-port", strconv.Itoa(*containerPort),
-		"-host-ip", "127.0.0.1",
+		"-host-ip", childIP,
 		"-host-port", strconv.Itoa(*hostPort),
 		"-proto", *proto)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
+	cmd.ExtraFiles = append(cmd.ExtraFiles, f)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Pdeathsig: syscall.SIGKILL,
 	}
 	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error while starting %s: %w", realProxy, err)
 	}
-	log.Printf("Executing command: %s", cmd.String())
 
 	sshFlags := []string{"-N", "-o", "StrictHostKeyChecking=no", "-p", diuidParentPort}
 	sshFlags = append(sshFlags, fmt.Sprintf("-R%s:%d:0.0.0.0:%d", *hostIP, *hostPort, *hostPort))
@@ -59,7 +107,7 @@ func main() {
 		Pdeathsig: syscall.SIGKILL,
 	}
 	if err := sshCmd.Start(); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error while starting ssh %s:", err)
 	}
 	defer sshCmd.Process.Kill()
 	log.Printf("Executing SSH command: %s", sshCmd.String())
@@ -68,6 +116,7 @@ func main() {
 	signal.Notify(ch, os.Interrupt)
 	<-ch
 	if err := cmd.Process.Kill(); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error while killing %s: %w", realProxy, err)
 	}
+	return nil
 }
