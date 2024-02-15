@@ -14,7 +14,7 @@ build: load
 
 .PHONY: build-image
 build-image:
-	docker build -t $(DOCKER_IMAGE) \
+	DOCKER_BUILDKIT=0 docker build -t $(DOCKER_IMAGE) \
 	--build-arg=GOLANG_VERSION=$(GOLANG_VERSION) \
 	--build-arg=BASE_IMAGE=$(BASE_IMAGE) \
  	.

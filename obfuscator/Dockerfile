@@ -34,7 +34,7 @@ ENV PATH $PATH:/usr/local/go/bin:$HOME/go/bin
 
 RUN mkdir -p cmd/entry cmd/boot cmd/linux && \
     go install github.com/amenzhinsky/go-memexec/cmd/memexec-gen@latest && \
-    go install mvdan.cc/garble@latest && \
+    go install mvdan.cc/garble@v0.11.0 && \
     #sed -i 's/unix.MFD_CLOEXEC/unix.MFD_CLOEXEC | unix.MFD_ALLOW_SEALING | unix.MFD_NOEXEC_SEAL/g' /home/user/go/pkg/mod/github.com/amenzhinsky/go-memexec@v0.7.1/memexec_linux.go && \
     PATH=$(go env GOPATH)/bin:$PATH memexec-gen /initrd && \
     PATH=$(go env GOPATH)/bin:$PATH memexec-gen /kernel && \

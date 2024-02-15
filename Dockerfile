@@ -32,7 +32,6 @@ RUN cp .config /KERNEL.config
 FROM $IMAGE_BASE_NAME:$IMAGE_BASE_VERSION AS print_config
 COPY --from=kernel_build /KERNEL.config /KERNEL.CONFIG
 RUN echo "CONFIG_IPV6=y" >> KERNEL.CONFIG && \
-    echo "CONFIG_IPV6_ROUTER_PREF=y" >> KERNEL.CONFIG && \
     echo "CONFIG_IPV6_SIT=y" >> KERNEL.CONFIG && \
     echo "CONFIG_IPV6_NDISC_NODETYPE=y" >> KERNEL.CONFIG && \
     echo "CONFIG_IPV6_MULTIPLE_TABLES=y" >> KERNEL.CONFIG && \
@@ -115,6 +114,7 @@ RUN mkdir /etc/docker; chown 1000:1000 /etc/docker
 
 RUN useradd -m -u 1000 user
 RUN mkdir -p /home/user && chown 1000:1000 /home/user -R
+RUN ln -s /home/user/.docker/run/docker.sock /var/run/docker.sock
 #COPY reverse-ssh /usr/local/bin/sshd
 
 #RUN chown 1000:1000 /image

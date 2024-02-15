@@ -11,7 +11,7 @@ SLIRP4NETNS_VERSION ?= 1.2.2
 
 .PHONY: build
 build:
-	docker build -t $(DOCKER_IMAGE) \
+	DOCKER_BUILDKIT=0 docker build -t $(DOCKER_IMAGE) \
 	--build-arg=IMAGE_BASE_NAME=$(IMAGE_BASE_NAME) \
 	--build-arg=IMAGE_BASE_VERSION=$(IMAGE_BASE_VERSION) \
 	--build-arg=KERNEL_VERSION=$(KERNEL_VERSION) \
