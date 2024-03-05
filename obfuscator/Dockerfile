@@ -91,7 +91,7 @@ COPY entrypoint.sh /entrypoint.sh
 COPY wrap /usr/local/bin/wrap
 
 USER root
-RUN apt-get update && apt install -yq gnupg jq curl pinentry-tty gnupg-agent && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt install -yq gnupg jq curl pinentry-tty gnupg-agent socat && rm -rf /var/lib/apt/lists/*
 
 RUN rm -rf /init.sh /kernel.sh /linux
 
