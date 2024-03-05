@@ -97,7 +97,7 @@ COPY --from=kernel_build /out/linux /linux/linux
 #COPY --chown=1000:1000 image.raw /image/
 #RUN chmod 777 /image/image.raw
 
-RUN apt-get install -y uidmap
+RUN apt-get update && apt-get install -y uidmap socat
 
 ADD kernel.sh kernel.sh
 ADD entrypoint.sh entrypoint.sh
