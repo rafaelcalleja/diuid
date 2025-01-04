@@ -121,7 +121,7 @@ RUN ln -s /home/user/.docker/run/docker.sock /var/run/docker.sock
 
 USER 1000
 ENV HOME /home/user
-COPY --chown=user:user config ${HOME}/keys/
+COPY --chown=1000:1000 config ${HOME}/keys/
 COPY --chown=root:root config /root/keys/
 
 #it is recommended to override /umlshm with
@@ -142,5 +142,5 @@ ENV DOCKER_HOST unix:///home/user/.docker/run/docker.sock
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "bash" ]
 
-COPY --chown=user:user daemon.json /etc/docker/daemon.json
-RUN dockerd-rootless-setuptool.sh install
+COPY --chown=1000:1000 daemon.json /etc/docker/daemon.json
+RUN dockerd-rootless-setuptool.sh install --force

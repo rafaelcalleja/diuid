@@ -62,6 +62,7 @@ echo "DIUID_DOCKERD_FLAGS=\"$DIUID_DOCKERD_FLAGS\"" > /tmp/env
 echo "HOST_USER=\"$(whoami)\"" >> /tmp/env
 echo "HOST_HOME=\"$HOME\"" >> /tmp/env
 echo "SSH_PRIVATE_KEY=\"$(cat ${HOME}/.ssh/id_rsa)\"" >> /tmp/env
+echo "SOCKET_PATH=\"/home/$(getent passwd 1000 | cut -d: -f1)/.docker/run/docker.sock\"" >> /tmp/env
 
 # Get docker group from DIUID_DOCKERD_FLAGS
 DIUID_DOCKERD_GROUP='docker'

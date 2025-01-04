@@ -46,7 +46,7 @@ chmod 700 ${HOME}/.ssh -R
 
 #connect to the parent docker container for reverse forwarding of the docker socket
 ssh -f -N -o StrictHostKeyChecking=no \
-    -R/home/user/.docker/run/docker.sock:/var/run/docker.sock \
+    -R${SOCKET_PATH}:/var/run/docker.sock \
     -R0.0.0.0:2375:127.0.0.1:2375 \
     -R0.0.0.0:2376:127.0.0.1:2376 \
     ${HOST_USER}@10.0.2.2 -p 2222
