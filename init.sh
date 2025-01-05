@@ -19,6 +19,13 @@ echo $$ >/sys/fs/cgroup/cgroup.procs
 rmdir /sys/fs/cgroup/init.tmp
 
 mount -t tmpfs none /run
+if [ -L /etc/resolv.conf ]; then
+    if [ ! -e /etc/resolv.conf ]; then
+        dir=$(dirname "$(readlink /etc/resolv.conf)")
+        mkdir -p "$dir"
+        echo -e "nameserver 8.8.8.8\nnameserver 8.8.4.4" > "$(readlink /etc/resolv.conf)"
+    fi
+fi
 mkdir /dev/pts
 mount -t devpts devpts /dev/pts
 rm /dev/ptmx
